@@ -106,6 +106,8 @@ class Character:
         self.status = r.json()
         return True
 
+    bs = begin_storylet
+
     def go_back(self):
         self.update_status()
         if 'In' not in self.get_phase():
@@ -123,6 +125,8 @@ class Character:
         for branch in self.status['Storylet']['ChildBranches']:
             print(f"{'!' if branch['IsLocked'] else ' '}{branch['Id']}: {branch['Name']}")
 
+    pb = print_branches
+
     def choose_branch(self, bid): # TODO check autofire cards
         self.update_status()
         if 'In' not in self.get_phase():
@@ -131,6 +135,8 @@ class Character:
         r = self.s.post(api.format('storylet/choosebranch'), data={'branchId': bid})
         self.status = r.json()
         return True
+
+    cb = choose_branch
 
     def print_result(self):
         if self.get_phase() != 'End':
@@ -141,10 +147,16 @@ class Character:
         for message in self.status['Messages']['DefaultMessages']:
             print(message['Message'])
 
+    pr = print_result
+
     def print_cards(self):
         for card in self.get_cards():
             print(f"{card['EventId']}: {card['Name']}")
 
+    pc = print_cards
+
     def print_storylets(self):
         for storylet in self.get_storylets():
             print(f"{storylet['Id']}: {storylet['Name']}")
+
+    ps = print_storylets
