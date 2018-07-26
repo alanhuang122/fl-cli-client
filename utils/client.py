@@ -50,6 +50,10 @@ class Character:
         self.update_sidebar()
         self.update_status()
 
+    def time_to_refresh(self):
+        self.update_sidebar()
+        print(str(arrow.get(self.sidebar['NextActionsAt']) - arrow.now()).split('.')[0])
+
     def update_sidebar(self):
         r = self.s.get(api.format('character/sidebar'), params={'full': False})
         self.sidebar = r.json()
