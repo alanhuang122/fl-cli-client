@@ -34,24 +34,24 @@ class Character:
         
         self.__login()
         
-        r = s.get(api.format('login/user'))
+        r = self.s.get(api.format('login/user'))
         self.user = r.json()
         
-        r = s.get(api.format('character/myself'))
+        r = self.s.get(api.format('character/myself'))
         self.info = r.json()['Character']
         self.qualities = r.json()['Possessions']
         
-        r = s.get(api.format('outfit'))
+        r = self.s.get(api.format('outfit'))
         self.outfit = r.json()
         
-        r = s.get(api.format('character/possessions'))
+        r = self.s.get(api.format('character/possessions'))
         self.items = r.json()['Possessions']
         
         self.update_sidebar()
         self.update_status()
 
     def update_sidebar(self):
-        r = s.get(api.format('character/sidebar'), params={'full': False})
+        r = self.s.get(api.format('character/sidebar'), params={'full': False})
         self.sidebar = r.json()
 
     def get_actions(self):
@@ -59,7 +59,7 @@ class Character:
         return (self.sidebar.get('Actions', -1), self.sidebar.get('ActionBankSize', None))
 
     def update_cards(self):
-        r = s.get(api.format('opportunity'))
+        r = self.s.get(api.format('opportunity'))
         self.cards = r.json()
 
     def get_deck(self):
@@ -72,16 +72,16 @@ class Character:
 
     def draw(self):
         if len(self.get_cards()) < self.cards['MaxHandSize'] and self.cards['EligibleForCardsCount'] > 0:
-            r = s.post(api.format('opportunity/draw'))
+            r = self.s.post(api.format('opportunity/draw'))
             self.cards = r.json()
 
     def discard(self, cid):
         assert any(card['EventId'] == cid for card in self.get_cards())
-        r = s.post(api.format(f'opportunity/discard/{cid}'))
+        r = self.s.post(api.format(f'opportunity/discard/{cid}'))
         return True
 
     def update_status(self):
-        r = s.post(api.format('storylet'))
+        r = self.s.post(api.format('storylet'))
         self.status = r.json()
 
     def get_status(self):
@@ -98,7 +98,7 @@ class Character:
         self.update_status()
         if self.get_phase() == 'In':
             return False
-        r = s.post(api.format('storylet/begin'), data={'eventId': sid})
+        r = self.s.post(api.format('storylet/begin'), data={'eventId': sid})
         self.status = r.json()
         return True
 
@@ -108,7 +108,7 @@ class Character:
             return True
         if not self.status['Storylet']['CanGoBack']:
             return False
-        s.post(api.format('storylet/goback'))
+        r = self.s.post(api.format('storylet/goback'))
         self.status = r.json()
         return True
 
@@ -124,7 +124,7 @@ class Character:
         if self.get_phase() != 'In':
             return False
         assert any([branch['Id'] == bid for branch in self.status['Storylet']['ChildBranches']])
-        r = s.post(api.format('storylet/choosebranch'), data={'branchId': bid})
+        r = self.s.post(api.format('storylet/choosebranch'), data={'branchId': bid})
         self.status = r.json()
         return True
 
