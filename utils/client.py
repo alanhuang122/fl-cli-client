@@ -2,10 +2,19 @@
 import arrow
 import netrc
 import requests
+import types
 
 api = 'https://api.fallenlondon.com/api/{}'
 
 class Character:
+    def __getattribute__(self, attr):
+        method = object.__getattribute__(self, attr)
+        if not method:
+            raise AttributeError("'Character' object has no attribute 'attr'")
+        if type(method) == types.MethodType and '__login' not in str(method):
+            self.__login()
+        return method
+
     def __login(self):
         if self.s.get(api.format('login/user')).status_code == 200:
             return True
@@ -28,6 +37,13 @@ class Character:
         
         self.s.headers.update({'Authorization': 'Bearer {}'.format(r.json()['Jwt'])})
         return True
+
+    def __del__(self):
+        self.logout()
+
+    def logout(self):
+        self.s.post(api.format('login/logout'))
+        self.s = requests.Session()
 
     def __init__(self):
         self.s = requests.Session()
