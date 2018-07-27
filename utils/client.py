@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import arrow
 import netrc
 import requests
@@ -97,7 +97,7 @@ class Character:
 
     def discard(self, cid):
         assert any(card['EventId'] == cid for card in self.get_cards())
-        r = self.s.post(api.format(f'opportunity/discard/{cid}'))
+        r = self.s.post(api.format('opportunity/discard/{}'.format(cid)))
         return True
 
     def update_status(self):
@@ -116,7 +116,7 @@ class Character:
 
     def begin_storylet(self, sid):
         self.update_status()
-        if 'In' not in self.get_phase():
+        if 'In' in self.get_phase():
             return False
         r = self.s.post(api.format('storylet/begin'), data={'eventId': sid})
         self.status = r.json()
@@ -139,7 +139,7 @@ class Character:
         if 'In' not in self.get_phase():
             return False
         for branch in self.status['Storylet']['ChildBranches']:
-            print(f"{'!' if branch['IsLocked'] else ' '}{branch['Id']}: {branch['Name']}")
+            print("{}{}: {}".format('!' if branch['IsLocked'] else ' ', branch['Id'], branch['Name']))
 
     pb = print_branches
 
@@ -157,8 +157,8 @@ class Character:
     def print_result(self):
         if self.get_phase() != 'End':
             return False
-        print(f"Name: {self.status['EndStorylet']['Event']['Name']}")
-        print(f"Desc: {self.status['EndStorylet']['Event']['Description']}\n")
+        print("Name: {}".format(self.status['EndStorylet']['Event']['Name']))
+        print("Desc: {}".format(self.status['EndStorylet']['Event']['Description']))
 
         for message in self.status['Messages']['DefaultMessages']:
             print(message['Message'])
@@ -167,12 +167,12 @@ class Character:
 
     def print_cards(self):
         for card in self.get_cards():
-            print(f"{card['EventId']}: {card['Name']}")
+            print("{card['EventId']}: {card['Name']}".format(card=card))
 
     pc = print_cards
 
     def print_storylets(self):
         for storylet in self.get_storylets():
-            print(f"{storylet['Id']}: {storylet['Name']}")
+            print("{storylet['Id']}: {storylet['Name']}".format(storylet=storylet))
 
     ps = print_storylets
