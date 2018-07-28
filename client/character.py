@@ -53,15 +53,10 @@ class Character:
         r = self.s.get(api.format('login/user'))
         self.user = r.json()
         
-        r = self.s.get(api.format('character/myself'))
-        self.info = r.json()['Character']
-        self.qualities = r.json()['Possessions']
-        
-        r = self.s.get(api.format('outfit'))
-        self.outfit = r.json()
-        
-        r = self.s.get(api.format('character/possessions'))
-        self.items = r.json()['Possessions']
+        self.info = None
+        self.items = None
+        self.qualities = None
+        self.outfit = None
         
         self.update_sidebar()
         self.update_status()
@@ -72,8 +67,22 @@ class Character:
         later = datetime.strptime(self.sidebar['NextActionsAt'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
         print(later - now)
 
+    def update_qualities(self):
+        r = self.s.get(api.format('character/myself'))
+        self.info = r.json()['Character']
+        self.qualities = r.json()['Possessions']
+
+    def update_items(self):
+        r = self.s.get(api.format('character/possessions'))
+        self.info = r.json()['Character']
+        self.items = r.json()['Possessions']
+
+    def update_outfit(self):
+        r = self.s.get(api.format('outfit'))
+        self.outfit = r.json()
+
     def update_sidebar(self):
-        r = self.s.get(api.format('character/sidebar'), params={'full': False})
+        r = self.s.get(api.format('character/sidebar'), params={'full': True})
         self.sidebar = r.json()
 
     def get_actions(self):
