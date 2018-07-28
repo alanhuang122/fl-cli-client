@@ -102,3 +102,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+*.swp
+
+bin/
+lib64
+pip-selfcheck.json
+pyvenv.cfg
