@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import arrow
+from datetime import datetime
 import netrc
 import requests
 import types
@@ -68,7 +68,9 @@ class Character:
 
     def time_to_refresh(self):
         self.update_sidebar()
-        print(str(arrow.get(self.sidebar['NextActionsAt']) - arrow.now()).split('.')[0])
+        now = datetime.strptime(self.sidebar['CurrentTime'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
+        later = datetime.strptime(self.sidebar['NextActionsAt'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
+        print(later - now)
 
     def update_sidebar(self):
         r = self.s.get(api.format('character/sidebar'), params={'full': False})
