@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from datetime import datetime
 import netrc
+import os
 import requests
 import types
 
@@ -12,21 +13,50 @@ class Character:
             return True
         try:
             login = netrc.netrc().authenticators('fallenlondon')
-            email = login[0]
-            pw = login[2]
-            del login
+
+            r = self.s.post(api.format('login'), data={'email': login[0], 'password': login[2]})
+
+            while True:
+                if r.status_code == 401:
+                    choice = input('Invalid credentials. Try again? (y/n): ')
+                    if choice.lower().startswith('y'):
+                        from getpass import getpass
+                        email = input('Email: ')
+                        pw = getpass('Password: ')
+
+                        r = self.s.post(api.format('login'), data={'email': email, 'password': pw})
+
+                    elif choice.lower().startswith('n'):
+                        return False
+                else:
+                    break
+
         except FileNotFoundError:
             from getpass import getpass
             email = input('Email: ')
             pw = getpass('Password: ')
 
-        r = self.s.post(api.format('login'), data={'email': email, 'password': pw})
+            r = self.s.post(api.format('login'), data={'email': email, 'password': pw})
 
-        del email, pw
+        try:
+            email, pw
+            while True:
+                choice = input('Do you want to save these credentials? (y/n): ')
+                if choice.lower().startswith('y'):
+                    home = os.path.expanduser('~')
+                    try:
+                        path = os.path.join(home, '.netrc')
+                        if os.path.isfile(path):
+                            # append
+                        elif not os.path.exists(path):
+                            # create
+                        else:
+                            print('Error trying to access file {}'.format(path))
+                elif choice.lower().startswith('n'):
+                    break
+        except NameError:
+            pass
 
-        if r.status_code != 200:
-            return False
-        
         self.s.headers.update({'Authorization': 'Bearer {}'.format(r.json()['Jwt'])})
         return True
 
