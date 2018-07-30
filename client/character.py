@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 from datetime import datetime
+import fileinput
+from getpass import getpass
 import netrc
 import os
 import requests
+import stat
+import sys
 import types
 
 api = 'https://api.fallenlondon.com/api/{}'
@@ -16,27 +20,24 @@ class Character:
 
             r = self.s.post(api.format('login'), data={'email': login[0], 'password': login[2]})
 
+            if r.status_code == 401:
+                print('Invalid saved credentials!')
+                raise Exception
+        except:
             while True:
+                email = input('Email: ')
+                pw = getpass('Password: ')
+
+                r = self.s.post(api.format('login'), data={'email': email, 'password': pw})
+
                 if r.status_code == 401:
-                    choice = input('Invalid credentials. Try again? (y/n): ')
+                    choice = input('Invalid credentials. Retry? (y/n) ')
                     if choice.lower().startswith('y'):
-                        from getpass import getpass
-                        email = input('Email: ')
-                        pw = getpass('Password: ')
-
-                        r = self.s.post(api.format('login'), data={'email': email, 'password': pw})
-
-                    elif choice.lower().startswith('n'):
-                        return False
-                else:
+                        continue
+                    else:
+                        sys.exit("Login failed.")
+                elif r.status_code == 200:
                     break
-
-        except FileNotFoundError:
-            from getpass import getpass
-            email = input('Email: ')
-            pw = getpass('Password: ')
-
-            r = self.s.post(api.format('login'), data={'email': email, 'password': pw})
 
         try:
             email, pw
@@ -44,14 +45,25 @@ class Character:
                 choice = input('Do you want to save these credentials? (y/n): ')
                 if choice.lower().startswith('y'):
                     home = os.path.expanduser('~')
-                    try:
-                        path = os.path.join(home, '.netrc')
-                        if os.path.isfile(path):
-                            # append
-                        elif not os.path.exists(path):
-                            # create
-                        else:
-                            print('Error trying to access file {}'.format(path))
+                    path = os.path.join(home, '.netrc')
+                    if os.path.isfile(path): # replace or append
+                        append = True
+                        for line in fileinput.input(path, inplace=True):
+                            if line.startswith('machine fallenlondon'):
+                                print("machine fallenlondon login {} password {}".format(email, pw))
+                                append = False
+                            else:
+                                print(line, end='')
+                        if append:
+                            with open(path, 'a') as f:
+                                f.write("machine fallenlondon login {} password {}\n".format(email, pw))
+                    elif not os.path.exists(path):
+                        with open(path, 'x') as f:
+                            f.write("machine fallenlondon login {} password {}\n".format(email, pw))
+                        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+                    else:
+                        print('Error trying to access {}'.format(path))
+                    break
                 elif choice.lower().startswith('n'):
                     break
         except NameError:
