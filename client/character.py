@@ -72,21 +72,6 @@ class Character:
         self.s.headers.update({'Authorization': 'Bearer {}'.format(r.json()['Jwt'])})
         return True
 
-    def logout(self):
-        self.s.post(api.format('login/logout'))
-        self.s = requests.Session()
-
-    def __getattribute__(self, attr):
-        method = object.__getattribute__(self, attr)
-        if not method:
-            raise AttributeError("'Character' object has no attribute 'attr'")
-        if type(method) == types.MethodType and '__login' not in str(method):
-            self.__login()
-        return method
-
-    def __del__(self):
-        self.logout()
-
     def __init__(self):
         self.s = requests.Session()
         
@@ -103,6 +88,31 @@ class Character:
         self.update_sidebar()
         self.update_status()
 
+    def __del__(self):
+        self.logout()
+
+    def logout(self):
+        self.__api_post('login/logout')
+        self.s = requests.Session()
+
+    def __api_get(self, endpoint, *args, **kwargs):
+        r = self.s.get(api.format(endpoint), *args, **kwargs)
+        if r.status_code != 200:
+            self.__login()
+            r = self.s.get(api.format(endpoint), *args, **kwargs)
+            if r.status_code != 200:
+                raise ConnectionError
+        return r
+
+    def __api_post(self, endpoint, *args, **kwargs):
+        r = self.s.post(api.format(endpoint), *args, **kwargs)
+        if r.status_code != 200:
+            self.__login()
+            r = self.s.post(api.format(endpoint), *args, **kwargs)
+            if r.status_code != 200:
+                raise ConnectionError
+        return r
+
     def time_to_refresh(self):
         self.update_sidebar()
         now = datetime.strptime(self.sidebar['CurrentTime'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
@@ -110,21 +120,21 @@ class Character:
         print(later - now)
 
     def update_qualities(self):
-        r = self.s.get(api.format('character/myself'))
+        r = self.__api_get('character/myself')
         self.info = r.json()['Character']
         self.qualities = r.json()['Possessions']
 
     def update_items(self):
-        r = self.s.get(api.format('character/possessions'))
+        r = self.__api_get('character/possessions')
         self.info = r.json()['Character']
         self.items = r.json()['Possessions']
 
     def update_outfit(self):
-        r = self.s.get(api.format('outfit'))
+        r = self.__api_get('outfit')
         self.outfit = r.json()
 
     def update_sidebar(self):
-        r = self.s.get(api.format('character/sidebar'), params={'full': True})
+        r = self.__api_get('character/sidebar', params={'full': True})
         self.sidebar = r.json()
 
     def get_actions(self):
@@ -132,7 +142,7 @@ class Character:
         return (self.sidebar.get('Actions', -1), self.sidebar.get('ActionBankSize', None))
 
     def update_cards(self):
-        r = self.s.get(api.format('opportunity'))
+        r = self.__api_get('opportunity')
         self.cards = r.json()
 
     def get_deck(self):
@@ -145,16 +155,16 @@ class Character:
 
     def draw(self):
         if len(self.get_cards()) < self.cards['MaxHandSize'] and self.cards['EligibleForCardsCount'] > 0:
-            r = self.s.post(api.format('opportunity/draw'))
+            r = self.__api_post('opportunity/draw')
             self.cards = r.json()
 
     def discard(self, cid):
         assert any(card['EventId'] == cid for card in self.get_cards())
-        r = self.s.post(api.format('opportunity/discard/{}'.format(cid)))
+        r = self.__api_post('opportunity/discard/{}'.format(cid))
         return True
 
     def update_status(self):
-        r = self.s.post(api.format('storylet'))
+        r = self.__api_post('storylet')
         self.status = r.json()
 
     def get_status(self):
@@ -171,7 +181,7 @@ class Character:
         self.update_status()
         if 'In' in self.get_phase():
             return False
-        r = self.s.post(api.format('storylet/begin'), data={'eventId': sid})
+        r = self.__api_post('storylet/begin', data={'eventId': sid})
         self.status = r.json()
         return True
 
@@ -183,7 +193,7 @@ class Character:
             return True
         if not self.status['Storylet']['CanGoBack']:
             return False
-        r = self.s.post(api.format('storylet/goback'))
+        r = self.__api_post('storylet/goback')
         self.status = r.json()
         return True
 
@@ -201,7 +211,7 @@ class Character:
         if 'In' not in self.get_phase():
             return False
         assert any([branch['Id'] == bid for branch in self.status['Storylet']['ChildBranches']])
-        r = self.s.post(api.format('storylet/choosebranch'), data={'branchId': bid})
+        r = self.__api_post('storylet/choosebranch', data={'branchId': bid})
         self.status = r.json()
         return True
 
