@@ -15,6 +15,7 @@ class Character:
     def __login(self):
         if self.s.get(api.format('login/user')).status_code == 200:
             return True
+        #print('logging in')
         try:
             login = netrc.netrc().authenticators('fallenlondon')
 
@@ -87,9 +88,8 @@ class Character:
         
         self.update_sidebar()
         self.update_status()
-
-    def __del__(self):
-        self.logout()
+        self.update_items()
+        self.update_qualities()
 
     def logout(self):
         self.__api_post('login/logout')
@@ -119,23 +119,47 @@ class Character:
         later = datetime.strptime(self.sidebar['NextActionsAt'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
         print(later - now)
 
-    def update_qualities(self):
-        r = self.__api_get('character/myself')
-        self.info = r.json()['Character']
-        self.qualities = r.json()['Possessions']
-
     def update_items(self):
         r = self.__api_get('character/possessions')
         self.info = r.json()['Character']
         self.items = r.json()['Possessions']
 
-    def update_outfit(self):
+    def get_items(self):
+        self.update_items()
+        return self.items
+
+    def update_qualities(self):
+        r = self.__api_get('character/myself')
+        self.info = r.json()['Character']
+        self.qualities = r.json()['Possessions']
+
+    def get_qualities(self):
+        self.update_qualities()
+        return self.qualities
+
+    def get_outfits(self):
+        self.update_qualities()
+        return self.info['Outfits']
+
+    def equip_outfit(self, id):
+        r = self.__api_post('outfit/change/{}'.format(id))
+        self.outfit = r.json()
+
+    def update_equipment(self):
         r = self.__api_get('outfit')
         self.outfit = r.json()
+
+    def get_equipment(self):
+        self.update_outfit()
+        return self.outfit
 
     def update_sidebar(self):
         r = self.__api_get('character/sidebar', params={'full': True})
         self.sidebar = r.json()
+
+    def get_sidebar(self):
+        self.update_sidebar()
+        return self.sidebar
 
     def get_actions(self):
         self.update_sidebar()
@@ -168,9 +192,11 @@ class Character:
         self.status = r.json()
 
     def get_status(self):
+        self.update_status()
         return self.status
 
     def get_phase(self):
+        self.update_status()
         return self.status['Phase']
 
     def get_storylets(self):
