@@ -223,6 +223,12 @@ class Character:
         self.status = r.json()
         return True
 
+    def get_branches(self):
+        self.update_status()
+        if 'In' not in self.get_phase():
+            return False
+        return self.status['Storylet']['ChildBranches']
+
     def print_branches(self):
         self.update_status()
         if 'In' not in self.get_phase():

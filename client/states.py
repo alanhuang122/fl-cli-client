@@ -24,13 +24,40 @@ def choose_state():
             print("Invalid input.")
             continue
 
-    # Remove well-formed tags, fixing mistakes by legitimate users
-    clean = tag_re.sub('', text)
+def Story(c):
+    # Maybe usable by more things
+    def clean(text):
+        tag_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
 
-    # Clean up anything else by escaping
-    return cgi.escape(clean)
+        # Remove well-formed tags, fixing mistakes by legitimate users
+        clean = tag_re.sub('', text)
 
-def Story():
+        # Clean up anything else by escaping
+        return cgi.escape(clean)
+
+    def Available(c):
+        # print deck, print cards, print storylets
+        raise NotImplementedError
+
+    def In(c):
+        # print branches, go back, switch state
+        branches = c.get_branches()
+        raise NotImplementedError
+
+    def End(c):
+        # print result, update phase
+        raise NotImplementedError
+
+    switch = {'Available': Available,
+              'In': In,
+              'InItemUse': In,
+              'End': End}
+
+    while True:
+        switch.get(c.get_phase(), lambda: sys.exit('Error: unknown phase {}'.format(c.get_phase())))
+        # if user has switched phases:
+        #     return
+
     raise NotImplementedError
 
 def Messages():

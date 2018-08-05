@@ -17,7 +17,7 @@ def main():
               State.Plans: Plans}
 
     while True:
-        switch.get(s, lambda: sys.exit('Error: unknown state {}'.format(s)))()
+        s = switch.get(s, lambda: sys.exit('Error: unknown state {}'.format(s)))()
 
 if __name__ == '__main__':
     main()
