@@ -6,6 +6,7 @@ import netrc
 import os
 import requests
 import stat
+from states import *
 import sys
 import types
 
@@ -80,6 +81,7 @@ class Character:
         
         r = self.s.get(api.format('login/user'))
         self.user = r.json()
+        self.state = State.Story
         
         self.info = None
         self.items = None
@@ -112,6 +114,13 @@ class Character:
             if r.status_code != 200:
                 raise ConnectionError
         return r
+
+    def get_state(self):
+        return self.state
+
+    def set_state(self, state):
+        if isinstance(state, State):
+            self.state = state
 
     def time_to_refresh(self):
         self.update_sidebar()
@@ -202,6 +211,9 @@ class Character:
     def get_storylets(self):
         self.update_status()
         return self.status['Storylets']
+
+    def get_storylet(self):
+        return self.status['Storylet']
 
     def begin_storylet(self, sid):
         self.update_status()

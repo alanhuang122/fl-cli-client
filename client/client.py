@@ -5,7 +5,6 @@ import sys
 c = character.Character()
 
 def main():
-    s = State.Story
     print("It's {}! Welcome to {}, delicious friend!".format(c.info['Name'], c.user['Area']['Name']))
 
     switch = {State.Story: Story,
@@ -17,7 +16,7 @@ def main():
               State.Plans: Plans}
 
     while True:
-        s = switch.get(s, lambda: sys.exit('Error: unknown state {}'.format(s)))()
+        c.set_state(switch.get(c.state, lambda x: sys.exit('Error: unknown state {}'.format(c.get_state()))(c))
 
 if __name__ == '__main__':
     main()
