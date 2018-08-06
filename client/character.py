@@ -134,7 +134,6 @@ class Character:
         self.items = r.json()['Possessions']
 
     def get_items(self):
-        self.update_items()
         return self.items
 
     def update_qualities(self):
@@ -143,11 +142,9 @@ class Character:
         self.qualities = r.json()['Possessions']
 
     def get_qualities(self):
-        self.update_qualities()
         return self.qualities
 
     def get_outfits(self):
-        self.update_qualities()
         return self.info['Outfits']
 
     def equip_outfit(self, id):
@@ -159,7 +156,6 @@ class Character:
         self.outfit = r.json()
 
     def get_equipment(self):
-        self.update_outfit()
         return self.outfit
 
     def update_sidebar(self):
@@ -167,11 +163,9 @@ class Character:
         self.sidebar = r.json()
 
     def get_sidebar(self):
-        self.update_sidebar()
         return self.sidebar
 
     def get_actions(self):
-        self.update_sidebar()
         return (self.sidebar.get('Actions', -1), self.sidebar.get('ActionBankSize', None))
 
     def update_cards(self):
@@ -179,11 +173,9 @@ class Character:
         self.cards = r.json()
 
     def get_deck(self):
-        self.update_cards()
         return (self.cards['EligibleForCardsCount'], self.cards['MaxDeckSize'])
 
     def get_cards(self):
-        self.update_cards()
         return self.cards['DisplayCards']
 
     def draw(self):
@@ -201,15 +193,12 @@ class Character:
         self.status = r.json()
 
     def get_status(self):
-        self.update_status()
         return self.status
 
     def get_phase(self):
-        self.update_status()
         return self.status['Phase']
 
     def get_storylets(self):
-        self.update_status()
         return self.status['Storylets']
 
     def get_storylet(self):
@@ -236,13 +225,11 @@ class Character:
         return True
 
     def get_branches(self):
-        self.update_status()
         if 'In' not in self.get_phase():
             return False
         return self.status['Storylet']['ChildBranches']
 
     def print_branches(self):
-        self.update_status()
         if 'In' not in self.get_phase():
             return False
         for branch in self.status['Storylet']['ChildBranches']:
