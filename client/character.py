@@ -71,23 +71,23 @@ class Character:
         except NameError:
             pass
 
-        self.s.headers.update({'Authorization': 'Bearer {}'.format(r.json()['Jwt'])})
+        self.s.headers.update({'Authorization': 'Bearer {}'.format(r.json()['jwt'])})
         return True
 
     def __init__(self):
         self.s = requests.Session()
-        
+
         self.__login()
-        
+
         r = self.s.get(api.format('login/user'))
         self.user = r.json()
         self.state = State.Story
-        
+
         self.info = None
         self.items = None
         self.qualities = None
         self.outfit = None
-        
+
         self.update_sidebar()
         self.update_status()
         self.update_items()
@@ -124,28 +124,27 @@ class Character:
 
     def time_to_refresh(self):
         self.update_sidebar()
-        now = datetime.strptime(self.sidebar['CurrentTime'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
-        later = datetime.strptime(self.sidebar['NextActionsAt'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
+        now = datetime.strptime(self.sidebar['currentTime'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
+        later = datetime.strptime(self.sidebar['nextActionsAt'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
         print(later - now)
 
     def update_items(self):
         r = self.__api_get('character/possessions')
-        self.info = r.json()['Character']
-        self.items = r.json()['Possessions']
+        self.items = r.json()['possessions']
 
     def get_items(self):
         return self.items
 
     def update_qualities(self):
         r = self.__api_get('character/myself')
-        self.info = r.json()['Character']
-        self.qualities = r.json()['Possessions']
+        self.info = r.json()['character']
+        self.qualities = r.json()['possessions']
 
     def get_qualities(self):
         return self.qualities
 
     def get_outfits(self):
-        return self.info['Outfits']
+        return self.info['outfits']
 
     def equip_outfit(self, id):
         r = self.__api_post('outfit/change/{}'.format(id))
@@ -166,25 +165,26 @@ class Character:
         return self.sidebar
 
     def get_actions(self):
-        return (self.sidebar.get('Actions', -1), self.sidebar.get('ActionBankSize', None))
+        update_sidebar()
+        return (self.sidebar.get('actions', -1), self.sidebar.get('actionBankSize', None))
 
     def update_cards(self):
         r = self.__api_get('opportunity')
         self.cards = r.json()
 
     def get_deck(self):
-        return (self.cards['EligibleForCardsCount'], self.cards['MaxDeckSize'])
+        return (self.cards['eligibleForCardsCount'], self.cards['maxDeckSize'])
 
     def get_cards(self):
-        return self.cards['DisplayCards']
+        return self.cards['displayCards']
 
     def draw(self):
-        if len(self.get_cards()) < self.cards['MaxHandSize'] and self.cards['EligibleForCardsCount'] > 0:
+        if len(self.get_cards()) < self.cards['maxHandSize'] and self.cards['eligibleForCardsCount'] > 0:
             r = self.__api_post('opportunity/draw')
             self.cards = r.json()
 
     def discard(self, cid):
-        assert any(card['EventId'] == cid for card in self.get_cards())
+        assert any(card['eventId'] == cid for card in self.get_cards())
         r = self.__api_post('opportunity/discard/{}'.format(cid))
         return True
 
@@ -196,13 +196,15 @@ class Character:
         return self.status
 
     def get_phase(self):
-        return self.status['Phase']
+        return self.status['phase']
+
+    # TODO not all fields are always present; depends on phase
 
     def get_storylets(self):
-        return self.status['Storylets']
+        return self.status['storylets']
 
     def get_storylet(self):
-        return self.status['Storylet']
+        return self.status['storylet']
 
     def begin_storylet(self, sid):
         self.update_status()
@@ -218,7 +220,7 @@ class Character:
         self.update_status()
         if 'In' not in self.get_phase():
             return True
-        if not self.status['Storylet']['CanGoBack']:
+        if not self.status['storylet']['canGoBack']:
             return False
         r = self.__api_post('storylet/goback')
         self.status = r.json()
@@ -227,13 +229,13 @@ class Character:
     def get_branches(self):
         if 'In' not in self.get_phase():
             return False
-        return self.status['Storylet']['ChildBranches']
+        return self.status['storylet']['childBranches']
 
     def print_branches(self):
         if 'In' not in self.get_phase():
             return False
-        for branch in self.status['Storylet']['ChildBranches']:
-            print("{}{}: {}".format('!' if branch['IsLocked'] else ' ', branch['Id'], branch['Name']))
+        for branch in self.status['storylet']['childBranches']:
+            print("{}{}: {}".format('!' if branch['isLocked'] else ' ', branch['id'], branch['name']))
 
     pb = print_branches
 
@@ -241,7 +243,7 @@ class Character:
         self.update_status()
         if 'In' not in self.get_phase():
             return False
-        assert any([branch['Id'] == bid for branch in self.status['Storylet']['ChildBranches']])
+        assert any([branch['id'] == bid for branch in self.status['storylet']['childBranches']])
         r = self.__api_post('storylet/choosebranch', data={'branchId': bid})
         self.status = r.json()
         return True
@@ -251,22 +253,22 @@ class Character:
     def print_result(self):
         if self.get_phase() != 'End':
             return False
-        print("Name: {}".format(self.status['EndStorylet']['Event']['Name']))
-        print("Desc: {}".format(self.status['EndStorylet']['Event']['Description']))
+        print("Name: {}".format(self.status['endStorylet']['event']['name']))
+        print("Desc: {}".format(self.status['endStorylet']['event']['description']))
 
-        for message in self.status['Messages']['DefaultMessages']:
-            print(message['Message'])
+        for message in self.status['messages']['defaultMessages']:
+            print(message['message'])
 
     pr = print_result
 
     def print_cards(self):
         for card in self.get_cards():
-            print("{card['EventId']}: {card['Name']}".format(card=card))
+            print("{card['eventId']}: {card['name']}".format(card=card))
 
     pc = print_cards
 
     def print_storylets(self):
         for storylet in self.get_storylets():
-            print("{storylet['Id']}: {storylet['Name']}".format(storylet=storylet))
+            print("{storylet['id']}: {storylet['name']}".format(storylet=storylet))
 
     ps = print_storylets
