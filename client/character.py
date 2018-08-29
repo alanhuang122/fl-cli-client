@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from datetime import datetime
 import fileinput
 from getpass import getpass
@@ -6,7 +7,7 @@ import netrc
 import os
 import requests
 import stat
-from states import *
+#from states import *
 import sys
 import types
 
@@ -81,7 +82,7 @@ class Character:
 
         r = self.s.get(api.format('login/user'))
         self.user = r.json()
-        self.state = State.Story
+        #self.state = State.Story
 
         self.info = None
         self.items = None
@@ -115,12 +116,12 @@ class Character:
                 raise ConnectionError
         return r
 
-    def get_state(self):
-        return self.state
+#    def get_state(self):
+#        return self.state
 
-    def set_state(self, state):
-        if isinstance(state, State):
-            self.state = state
+#    def set_state(self, state):
+#        if isinstance(state, State):
+#            self.state = state
 
     def time_to_refresh(self):
         self.update_sidebar()
