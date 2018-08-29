@@ -8,11 +8,11 @@ import time
 
 from character import Character
 
-print(f'current time {datetime.now()}')
+print('current time {}'.format(datetime.now()))
 
 delay = random.randint(0, 30*60)
 
-print(f'sleeping for {delay} secs...')
+print('sleeping for {} secs...'.format(delay))
 
 sys.stdout.flush()
 
