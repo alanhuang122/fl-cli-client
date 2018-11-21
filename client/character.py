@@ -61,7 +61,7 @@ class Character:
                             with open(path, 'a') as f:
                                 f.write("machine fallenlondon login {} password {}\n".format(email, pw))
                     elif not os.path.exists(path):
-                        with open(path, 'x') as f:
+                        with open(path, 'w') as f:
                             f.write("machine fallenlondon login {} password {}\n".format(email, pw))
                         os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
                     else:
@@ -89,9 +89,9 @@ class Character:
         self.qualities = None
         self.outfit = None
 
-        self.update_sidebar()
+        self.update_actions()
         self.update_status()
-        self.update_items()
+        self.update_cards()
         self.update_qualities()
 
     def logout(self):
@@ -124,17 +124,10 @@ class Character:
 #            self.state = state
 
     def time_to_refresh(self):
-        self.update_sidebar()
-        now = datetime.strptime(self.sidebar['currentTime'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
-        later = datetime.strptime(self.sidebar['nextActionsAt'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
+        self.update_actions()
+        now = datetime.strptime(self.actions['currentTime'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
+        later = datetime.strptime(self.actions['nextActionsAt'].rsplit('.')[0], '%Y-%m-%dT%H:%M:%S')
         print(later - now)
-
-    def update_items(self):
-        r = self.__api_get('character/possessions')
-        self.items = r.json()['possessions']
-
-    def get_items(self):
-        return self.items
 
     def update_qualities(self):
         r = self.__api_get('character/myself')
@@ -158,16 +151,13 @@ class Character:
     def get_equipment(self):
         return self.outfit
 
-    def update_sidebar(self):
-        r = self.__api_get('character/sidebar', params={'full': True})
-        self.sidebar = r.json()
-
-    def get_sidebar(self):
-        return self.sidebar
+    def update_actions(self):
+        r = self.__api_get('character/actions')
+        self.actions = r.json()
 
     def get_actions(self):
-        update_sidebar()
-        return (self.sidebar.get('actions', -1), self.sidebar.get('actionBankSize', None))
+        self.update_actions()
+        return (self.actions.get('actions', -1), self.actions.get('actionBankSize', None))
 
     def update_cards(self):
         r = self.__api_get('opportunity')
@@ -264,12 +254,12 @@ class Character:
 
     def print_cards(self):
         for card in self.get_cards():
-            print("{card['eventId']}: {card['name']}".format(card=card))
+            print("{card[eventId]}: {card[name]}".format(card=card))
 
     pc = print_cards
 
     def print_storylets(self):
         for storylet in self.get_storylets():
-            print("{storylet['id']}: {storylet['name']}".format(storylet=storylet))
+            print("{storylet[id]}: {storylet[name]}".format(storylet=storylet))
 
     ps = print_storylets
